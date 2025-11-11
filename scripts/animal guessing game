@@ -1,0 +1,88 @@
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+import random
+answers = ['yes', 'probably', 'idk', 'probably not', 'no', 'y', 'probably yes', 'i dont know', 'maybe', 'probably no', 'n']
+
+def load_dataset(dataset_path):
+    df = pd.read_csv(dataset_path)
+    y = df.iloc[:, 0]        
+    X = df.iloc[:, 1:]     
+    return X, y
+dataset_path = "animal_dataset.csv"
+X, y = load_dataset(dataset_path)
+
+def best_first_question(X):
+    best_feature = None
+    best_split = 1.0  
+    for feature in X.columns:
+        yes_ratio = (X[feature] == 1).mean()
+        split_quality = abs(0.5 - yes_ratio)
+        if split_quality < best_split:
+            best_split = split_quality
+            best_feature = feature
+    return best_feature
+
+def best_question(new_series, X, asked_features): 
+    best_likelihoods = new_series[new_series == new_series.max()].index 
+    X_sub = X.loc[best_likelihoods].drop(columns=asked_features) 
+    best_feature = None 
+    best_split = 1.0 
+    for feature in X_sub.columns: 
+        yes_ratio = (X_sub[feature] == 1).mean() 
+        split_quality = abs(0.5 - yes_ratio) 
+        if split_quality < best_split: 
+            best_split = split_quality 
+            best_feature = feature 
+    return best_feature
+
+def update_likelihood(animal_value, new_series, i, answer):
+    if answer in ('yes', 'y'):
+        new_series.loc[i] += 1 if animal_value == 1 else 0
+    elif answer in ('probably', 'probably yes'):
+        new_series.loc[i] += 0.75 if animal_value == 1 else 0.25
+    if answer in ('i dont know', 'idk', 'maybe'):
+        new_series.loc[i] += 0.5
+    if answer in ('probably not', 'probably no'):
+        new_series.loc[i] += 0.25 if animal_value == 1 else 0.75
+    if answer in ('no', 'n'):
+        new_series.loc[i] += 0 if animal_value == 1 else 1
+    return new_series
+
+def guess(new_series, X, asked_features):
+    best_likelihoods = new_series[new_series == new_series.max()].index
+    if len(best_likelihoods) > 1:
+        feature = best_question(new_series, X, asked_features)
+        asked_features.add(feature)
+        answer = answer = input(f"{feature}? (yes/probably/idk/probably not/no): ").strip().lower()
+        if answer not in answers:
+            answer = input(f"I am sorry, I did not get that, can you answer again?").strip().lower()
+        for i in new_series.index:
+            animal_value = X.loc[i, feature]
+            new_series = update_likelihood(animal_value, new_series, i, answer)
+        guess(new_series, X, asked_features)
+    else:
+        animal = y[best_likelihoods[0]]
+        print("I think your animal is a", animal)
+        answer = input(f"Is your animal a {animal}? Please answer yes or no")
+        if answer in ('yes'):
+            print("Yess, I got it correct!")
+        else: 
+            new_series = new_series.drop(best_likelihoods[0])
+            guess(new_series, X, asked_features) 
+
+def play_game(X, y):
+    print("\nPlease think of an animal \n")
+
+    new_series = pd.Series(0, index=X.index, name='Value')
+    asked_features = set()
+    for i in range(6):
+        feature = best_question(new_series, X, asked_features)
+        answer = input(f"{feature}? (yes/probably/idk/probably not/no): ").strip().lower()
+        if answer not in answers:
+            answer = input(f"I am sorry, I did not get that, can you answer again?").strip().lower()
+        asked_features.add(feature)
+        
+        for i in new_series.index:
+            animal_value = X.loc[i, feature]
+            new_series = update_likelihood(animal_value, new_series, i, answer)
+    guess(new_series, X, asked_features)
