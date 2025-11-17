@@ -9,4 +9,4 @@ from sic_framework.devices.common_naoqi.naoqi_motion_recorder import (
 )
 
 recording = NaoqiMotionRecording.load("path to file")
-self.nao.motion_record.request(PlayRecording(recording)) ```
+self.nao.motion_record.request(PlayRecording(recording))
