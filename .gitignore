@@ -33,3 +33,4 @@ conf/.env
 
 # Ignore dialogflow keyfiles
 conf/google/*.json
+api-key.json
