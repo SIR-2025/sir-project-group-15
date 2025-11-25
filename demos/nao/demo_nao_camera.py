@@ -26,7 +26,7 @@ class NaoCameraDemo(SICApplication):
         super(NaoCameraDemo, self).__init__()
         
         # Demo-specific initialization
-        self.nao_ip = "XXX"
+        self.nao_ip = "10.0.0.127"
         self.nao = None
         self.imgs = queue.Queue()
         
