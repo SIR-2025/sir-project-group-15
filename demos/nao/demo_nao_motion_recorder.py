@@ -4,7 +4,6 @@ from sic_framework.core import sic_logging
 
 # Import the device(s) we will be using
 from sic_framework.devices import Nao
-from sic_framework.devices.common_naoqi.naoqi_autonomous import NaoRestRequest, NaoWakeUpRequest
 
 # Import message types and requests
 from sic_framework.devices.common_naoqi.naoqi_motion_recorder import (
@@ -55,9 +54,6 @@ class NaoMotionRecorderDemo(SICApplication):
     def run(self):
         """Main application logic."""
         try:
-            # Make sure the Nao is in active mode for motion recording.
-
-            self.nao.autonomous.request(NaoWakeUpRequest())
             # Disable stiffness such that we can move it by hand
             self.nao.stiffness.request(Stiffness(stiffness=0.0, joints=self.chain))
             
@@ -78,9 +74,7 @@ class NaoMotionRecorderDemo(SICApplication):
             )  # Enable stiffness for replay
             recording = NaoqiMotionRecording.load(self.motion_name)
             self.nao.motion_record.request(PlayRecording(recording))
-
-            # always end with a rest, whenever you reach the end of your code
-            self.nao.autonomous.request(NaoRestRequest())
+            
             self.logger.info("Motion recorder demo completed successfully")
         except Exception as e:
             self.logger.error("Exception: {}".format(e=e))

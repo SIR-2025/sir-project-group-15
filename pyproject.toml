@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SIR-group15"  # pick a unique name
+version = "0.1.0"
+description = "Socially intelligent robots NAO control"
+requires-python = ">=3.12"
+dependencies = [
+    "elevenlabs>=2.24.0",
+    "google>=3.0.0",
+    "google-cloud-dialogflow>=2.43.0",
+    "google-cloud-dialogflow-cx>=2.0.0",
+    "social-interaction-cloud>=2.1.7",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
