@@ -1,13 +1,15 @@
 from guessing_algorithm import *
+from utils import load_dataset
 
 import pandas as pd
 import random
 
 class GuessingGameModel:
-    def __init__(self, X, y):
-        self.X, self.y = X, y
+    def __init__(self, session_id, animal_dataset_path):
+        self.session_id = session_id
+        self.X, self.y = load_dataset(animal_dataset_path)
         
-        self.likeihoods = pd.Series(0.0, index=X.index)
+        self.likeihoods = pd.Series(0.0, index=self.X.index)
         self.asked_features = set()
         self.useless_features = set()
         self.turn_count = 0
