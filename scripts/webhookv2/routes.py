@@ -1,3 +1,5 @@
+from utils import get_session_id
+
 from flask import request, jsonify
         
 

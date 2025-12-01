@@ -1,28 +1,132 @@
+from guessing_algorithm import *
+
 from flask import jsonify
+import pandas as pd
+import random
 
-def parse_user_response(state, user_answer, new_series):
-    if state["pending_guess_animal"]:
-        if user_answer in ('yes', 'y', 'correct'):
-            response_text = "yipie, I got it correct! Say 'reset' to play again."
-
-            del session_states[session_id]
-            return jsonify({"fulfillment_response": {"messages": [{"text": {"text": [response_text]}}]}})
-        else:
-            # Find the index of the animal we just guessed and remove it.
-            guessed_idx = y[y == state["pending_guess_animal"]].index[0]
-            new_series = new_series.drop(guessed_idx)
-            
-            response_text = "Okay, not that. Let me think... "
-            state["pending_guess_animal"] = None 
-
-    elif state["last_feature_asked"] and user_answer:
-        feature = state["last_feature_asked"]
-        # Update scores for every animal
-        for i in new_series.index:
-            val = X.loc[i, feature]
-            # Calculate new score
-            new_series.loc[i] = update_likelihood(val, new_series.loc[i], user_answer)
+class GuessingGameModel:
+    def __init__(self, X, y):
+        self.X, self.y = X, y
         
-        state["asked_features"].append(feature)
-        state["turn_count"] += 1
-        state["last_feature_asked"] = None
+        self.likeihoods = pd.Series(0.0, index=X.index)
+        self.asked_features = set()
+        self.useless_features = set()
+        self.turn_count = 0
+        self.last_feature_asked = None
+        self.pending_guess_animal = False
+        self.top_history = []
+        
+        self.MIN_ASKED_FEATURES_BEFORE_STUCK_CHECK = 5
+        
+
+    def parse_user_answer(self, state, user_answer):
+        self.likeihoods = pd.Series(state["likelihoods"])
+        
+        if state["pending_guess_animal"]:
+            if user_answer in ('yes', 'y', 'correct'):
+                response_text = "yipie, I got it correct! Say 'reset' to play again."
+                return jsonify({"fulfillment_response": {"messages": [{"text": {"text": [response_text]}}]}})
+            else:
+                # Find the index of the animal we just guessed and remove it.
+                guessed_idx = self.y[self.y == state["pending_guess_animal"]].index[0]
+                self.likeihoods = self.likeihoods.drop(guessed_idx)
+                
+                response_text = "Okay, not that. Let me think... "
+                state["pending_guess_animal"] = None 
+
+        elif state["last_feature_asked"] and user_answer:
+            self.next_response()
+
+            
+    def next_response(self):
+        '''
+        If statement to check if highest likelihood animal can be guessed.
+        When wrong animal, this animal will be removed from the possibilities.
+        '''    
+        response_text = ""
+        
+        if is_confident_enough(self.likelihood): 
+            best_idx = self.likelihood.idxmax()
+            best_animal = self.y[best_idx]
+            response_text = f"Is it a {best_animal}?"
+            self.pending_guess_animal = True
+            self.reset_game()
+            return response_text
+            
+        feature, response_text, got_stuck = self.get_next_feature()
+        if got_stuck:
+            self.reset_game()
+            return response_text
+            
+        
+        self.asked_features.add(feature)
+        response_text += f" {feature}?"
+        
+        for i in self.likelihood.index: # Update likelihoods for next round
+            self.likelihood = update_likelihood(self.X.loc[i, feature], self.likelihood, i, self.answer)
+        
+        self.track_top_animals()
+        
+        return response_text
+    
+    
+    def get_next_feature(self):
+        '''
+        Part to determine which feature to extract next to ask. If check_stuck method is activated, the algorithm is not updating the top candidates
+        anymore and therefore will ask a question previously answered with "i dont know" again. 
+        Else, the algorithm will just ask a feature based on the optimal split for the top performing animals.
+        '''
+        feature = None
+        response_text = ""
+        got_stuck = False
+        
+        if len(self.likelihood) > 1 \
+            and check_stuck(self.top_history, self.likelihood, top_n=3, required_repeats=4) \
+            and len(self.asked_features) > self.MIN_ASKED_FEATURES_BEFORE_STUCK_CHECK: 
+                
+            max_value = self.likelihood.max()
+            top_candidates = self.likelihood[self.likelihood == max_value].index
+            fallback_feature = most_discriminative_feature(self.X, top_candidates, self.asked_features, self.useless_features)
+            
+            if fallback_feature:
+                response_text = "It seems I'm not getting new information from your answers. Please let me ask you this specific question again:"
+                feature = fallback_feature
+                self.useless_features.add(feature)
+            else:
+                animal_names = list(self.y[top_candidates])
+                animal_names = animal_names[:3] 
+                response_text = f"I seem to be stuck between the following animals: {', '.join(animal_names)}. I will try to guess it next time."
+                got_stuck = True
+        else:
+            top_candidates = self.likelihood[self.likelihood == self.likelihood.max()].index
+            feature = best_feature_to_ask(self.X, candidate_animals=top_candidates, asked_features=self.asked_features)
+            
+        return feature, response_text, got_stuck
+
+    def track_top_animals(self):
+        '''
+        This code keeps track of the top performing animals which will be fed into check_stuck.
+        If the top performing animals are exactly the same after a few questions, the model gets stuck and has to ask an already asked question again. 
+        '''
+        current_top = tuple(self.likelihood.sort_values(ascending=False).head(3).index)
+        top_vals = self.likelihood.sort_values(ascending=False)
+        max_val = top_vals.iloc[0]
+        tied = list(top_vals[top_vals == max_val].index)
+        
+        if len(tied) > 3:
+            current_top = tuple(random.sample(tied, 3))
+        if len(self.asked_features) > 4:
+            self.top_history.append(current_top)
+        if len(self.top_history) > 5: 
+            self.top_history.pop(0)
+        
+            
+    def reset_game(self):
+        self.likelihoods = pd.Series(0.0, index=self.X.index)
+        self.asked_features = set()
+        self.useless_features = set()
+        self.turn_count = 0
+        self.last_feature_asked = None
+        self.pending_guess_animal = False
+        self.top_history = []
+        

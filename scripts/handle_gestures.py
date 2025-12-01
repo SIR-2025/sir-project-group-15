@@ -48,12 +48,9 @@ def gesture_logic(nao, reply, logger, custom_gestures):
     # Perform gestures based on detected intent (non-blocking)
     if reply.intent == "greeting":
         logger.info("Welcome intent detected - performing wave gesture")
-        # Use send_message for non-blocking gesture execution
-        # This allows the TTS to speak while the gesture is performed
+
         nao.motion.request(NaoPostureRequest("Stand", 0.5), block=False)
         nao.motion.request(NaoqiAnimationRequest("animations/Stand/Gestures/Hey_1"), block=False)
-        #recording = NaoqiMotionRecording.load("gestures/fly")
-        #nao.motion_record.request(PlayRecording(recording), block=False)
 
     # 2. If no custom gesture was found, check for the generic question mark
     elif not gesture_found and "?" in text:
@@ -65,7 +62,6 @@ def gesture_logic(nao, reply, logger, custom_gestures):
         selected_anim = random.choice(options)
         logger.info(f"Playing built-in gesture: {selected_anim}")
         nao.motion.request(NaoqiAnimationRequest(selected_anim), block=False)
-    # --- ------------------------ ---
 
     elif not gesture_found and "yipie" in text:
         logger.info(f"Playing celebration")
