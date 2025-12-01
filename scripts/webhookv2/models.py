@@ -1,6 +1,5 @@
 from guessing_algorithm import *
 
-from flask import jsonify
 import pandas as pd
 import random
 
@@ -13,59 +12,62 @@ class GuessingGameModel:
         self.useless_features = set()
         self.turn_count = 0
         self.last_feature_asked = None
-        self.pending_guess_animal = False
+        self.pending_guess_animal = None
         self.top_history = []
         
         self.MIN_ASKED_FEATURES_BEFORE_STUCK_CHECK = 5
         
 
-    def parse_user_answer(self, state, user_answer):
-        self.likeihoods = pd.Series(state["likelihoods"])
+    def parse_user_answer(self, user_answer):
+        response_text = ""
         
-        if state["pending_guess_animal"]:
-            if user_answer in ('yes', 'y', 'correct'):
-                response_text = "yipie, I got it correct! Say 'reset' to play again."
-                return jsonify({"fulfillment_response": {"messages": [{"text": {"text": [response_text]}}]}})
-            else:
-                # Find the index of the animal we just guessed and remove it.
-                guessed_idx = self.y[self.y == state["pending_guess_animal"]].index[0]
-                self.likeihoods = self.likeihoods.drop(guessed_idx)
-                
-                response_text = "Okay, not that. Let me think... "
-                state["pending_guess_animal"] = None 
-
-        elif state["last_feature_asked"] and user_answer:
-            self.next_response()
-
+        if user_answer in ('yes', 'yep', 'yeah', 'y', 'correct'):
+            response_text = "yipie, I got it correct! Say 'reset' to play again."
+        else:
+            # Find the index of the animal we just guessed and remove it.
+            guessed_idx = self.y[self.y == self.pending_guess_animal].index[0]
+            self.likeihoods = self.likeihoods.drop(guessed_idx)
             
-    def next_response(self):
+            response_text = "Okay, not that. Let me think... "
+            self.pending_guess_animal = None 
+            
+        return response_text
+            
+            
+    def next_response(self, user_answer):
         '''
         If statement to check if highest likelihood animal can be guessed.
         When wrong animal, this animal will be removed from the possibilities.
         '''    
         response_text = ""
         
+        if not (self.last_feature_asked and user_answer):
+            return response_text
+        
+        if self.pending_guess_animal:
+            guessed_right, response_text = self.parse_user_answer(user_answer)
+            if guessed_right:
+                return response_text
+        
         if is_confident_enough(self.likelihood): 
             best_idx = self.likelihood.idxmax()
             best_animal = self.y[best_idx]
             response_text = f"Is it a {best_animal}?"
-            self.pending_guess_animal = True
-            self.reset_game()
-            return response_text
+            self.pending_guess_animal = best_animal
+        else:   
+            feature, response_text, got_stuck = self.get_next_feature()
+            if got_stuck:
+                self.reset_game()
+                return response_text
+                
             
-        feature, response_text, got_stuck = self.get_next_feature()
-        if got_stuck:
-            self.reset_game()
-            return response_text
+            self.asked_features.add(feature)
+            response_text += f" {feature}?"
             
-        
-        self.asked_features.add(feature)
-        response_text += f" {feature}?"
-        
-        for i in self.likelihood.index: # Update likelihoods for next round
-            self.likelihood = update_likelihood(self.X.loc[i, feature], self.likelihood, i, self.answer)
-        
-        self.track_top_animals()
+            for i in self.likelihood.index: # Update likelihoods for next round
+                self.likelihood = update_likelihood(self.X.loc[i, feature], self.likelihood, i, self.answer)
+            
+            self.track_top_animals()
         
         return response_text
     

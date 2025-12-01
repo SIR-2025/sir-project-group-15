@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+from flask import jsonify
 
 def load_dataset(dataset_path):
     df = pd.read_csv(dataset_path)
@@ -12,4 +13,12 @@ def get_session_id(session_str):
     if match:
         return match.group(1)
     return session_str
+
+def jsonify_response(response_text):
+    return jsonify({
+        "fulfillment_response": {
+            "messages": [{"text": {"text": [response_text]}}]
+        }
+    })
+    
     
