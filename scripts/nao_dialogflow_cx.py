@@ -1,5 +1,7 @@
+# Import local modules
+from handle_gestures import gesture_logic, setup_gestures
+
 # Import basic preliminaries
-import random
 import os
 from sic_framework.core.sic_application import SICApplication
 from sic_framework.core import sic_logging
@@ -9,23 +11,15 @@ from elevenlabs import ElevenLabs
 # Import the device(s) we will be using
 from sic_framework.devices import Nao
 from sic_framework.devices.nao import NaoqiTextToSpeechRequest
-from sic_framework.devices.common_naoqi.naoqi_motion import NaoqiAnimationRequest, NaoPostureRequest
 
 # Import the service(s) we will be using
 from sic_framework.services.dialogflow_cx.dialogflow_cx import (
     DialogflowCX,
     DialogflowCXConf,
     DetectIntentRequest,
-    QueryResult,
-    RecognitionResult,
 )
 
 from sic_framework.core.message_python2 import AudioRequest
-
-from sic_framework.devices.common_naoqi.naoqi_motion_recorder import (
-    NaoqiMotionRecording,
-    PlayRecording,
-)
 
 # Import libraries necessary for the demo
 import json
@@ -33,7 +27,7 @@ from os.path import abspath, join
 import numpy as np
 
 
-class NaoDialogflowCXDemo(SICApplication):
+class NaoDialogflowCX(SICApplication):
     """
     NAO Dialogflow CX demo application.
     
@@ -58,9 +52,9 @@ class NaoDialogflowCXDemo(SICApplication):
     Note: This uses Dialogflow CX (v3), which is different from Dialogflow ES (v2).
     """
     
-    def __init__(self):
+    def __init__(self, enhanced_voice=False):
         # Call parent constructor (handles singleton initialization)
-        super(NaoDialogflowCXDemo, self).__init__()
+        super(NaoDialogflowCX, self).__init__()
         
         # Demo-specific initialization
         self.nao_ip = "10.0.0.127"  # TODO: Replace with your NAO's IP address 10.15.2.86 / 10.0.0.245 / 169.254.195.109 / 10.0.0.127
@@ -96,21 +90,25 @@ class NaoDialogflowCXDemo(SICApplication):
                     if hasattr(rr, 'transcript'):
                         self.logger.info("Transcript: {transcript}".format(transcript=rr.transcript))
                         
-    def say(self, text):
-        speech = self.tts_client.text_to_speech.convert(
-                        voice_id="tnSpp4vdxKPjI9w0GnoV",
-                        output_format="pcm_16000",
-                        text=text,
-                        model_id="eleven_multilingual_v2"
-                    ) # returns bytes of audio file
-                    
-        sample_rate = 16000
-        
-        speech_bytes = b"".join(speech)
+    def speak_task(self, text):
+        if self.enhanced_voice:
+            speech = self.tts_client.text_to_speech.convert(
+                            voice_id="tnSpp4vdxKPjI9w0GnoV",
+                            output_format="pcm_16000",
+                            text=text,
+                            model_id="eleven_multilingual_v2"
+                        ) # returns bytes of audio file
+                        
+            sample_rate = 16000
+            
+            speech_bytes = b"".join(speech)
 
-        message = AudioRequest(sample_rate=sample_rate, waveform=speech_bytes)
-        self.nao.speaker.request(message)
-    
+            message = AudioRequest(sample_rate=sample_rate, waveform=speech_bytes)
+            self.nao.speaker.request(message)
+        else:
+            tts_request = NaoqiTextToSpeechRequest(text=text, sample_rate=16000)
+            self.nao.tts.request(tts_request)
+        
     def setup(self):
         """Initialize and configure NAO robot and Dialogflow CX."""
         self.logger.info("Initializing NAO robot...")
@@ -126,12 +124,10 @@ class NaoDialogflowCXDemo(SICApplication):
             keyfile_json = json.load(f)
         
         # Agent configuration
-        # TODO: Replace with your agent details (use verify_dialogflow_cx_agent.py to find them)
         agent_id = "d9d2ea8b-d3ac-4965-9e3e-7ea1108528c5"  # Replace with your agent ID
         location = "europe-west4"  # Replace with your agent location if different
         
         # Create configuration for Dialogflow CX
-        # Note: NAO uses 16000 Hz sample rate (not 44100 like desktop)
         dialogflow_conf = DialogflowCXConf(
             keyfile_json=keyfile_json,
             agent_id=agent_id,
@@ -147,53 +143,20 @@ class NaoDialogflowCXDemo(SICApplication):
         # Register a callback function to handle recognition results
         self.dialogflow_cx.register_callback(callback=self.on_recognition)
         
-        #Setup ElevenLabs for TTS
+        # Setup ElevenLabs for TTS
         with open(abspath(join("..", "conf", "elevenlabs", "api-key.json"))) as f:
             keyfile_json = json.load(f)
             elvenlabs_api_key = keyfile_json["EL_API_KEY"]
         
         self.tts_client = ElevenLabs(base_url="https://api.elevenlabs.io", api_key=elvenlabs_api_key)
-    
-
-        # --- GESTURE LOADING ---
-        self.logger.info("Loading all custom gestures from 'gestures/' folder...")
         
-        self.custom_gestures = {} # Dictionary to store name -> recording
+        # Load custom gestures
         gesture_folder = "gestures"
-
-        # check if folder exists to avoid crashing
-        if os.path.exists(gesture_folder):
-            # Loop through every file in the folder
-            for filename in os.listdir(gesture_folder):
-                # Skip hidden system files (like .DS_Store on mac)
-                if filename.startswith("."): 
-                    continue
-                
-                # We assume the filename IS the trigger word (e.g. "run", "clap")
-                # If your files have extensions (like run.motion), use: filename.split('.')[0]
-                trigger_word = filename 
-                
-                full_path = os.path.join(gesture_folder, filename)
-                
-                try:
-                    # Load it and store it in our dictionary
-                    recording = NaoqiMotionRecording.load(full_path)
-                    self.custom_gestures[trigger_word] = recording
-                    self.logger.info(f"Loaded gesture: '{trigger_word}'")
-                except Exception as e:
-                    self.logger.error(f"Failed to load {filename}: {e}")
-        else:
-             self.logger.warning(f"Folder '{gesture_folder}' not found!")
+        self.custom_gestures = setup_gestures(gesture_folder, self.logger)
     
-    def run(self, enhanced_voice=False):
+    def run(self):
         """Main application loop."""
-        try:
-            # Demo starts
-            if enhanced_voice:
-                self.say("Hello, I am Nao, nice to meet you!")
-            else:
-                self.nao.tts.request(NaoqiTextToSpeechRequest("Hello, I am Nao, nice to meet you!"))
-                
+        try:    
             self.logger.info(" -- Ready -- ")
             
             while not self.shutdown_event.is_set():
@@ -210,20 +173,13 @@ class NaoDialogflowCXDemo(SICApplication):
                     ))
 
                 # Speak the agent's response using NAO's text-to-speech
-                if reply.fulfillment_message: #TODO: move this earlier
+                if reply.fulfillment_message: 
                     text = reply.fulfillment_message
                     self.logger.info("NAO reply: {text}".format(text=text))
 
-                    def speak_task():
-                        if enhanced_voice:
-                            self.say(text)
-                        else:
-                            self.nao.tts.request(NaoqiTextToSpeechRequest(text))
-
                     # --- STEP 2: START SPEAKING (NON-BLOCKING) ---
-                    # We start the thread, which sends the audio command immediately.
-                    # The main code DOES NOT wait for this to finish.
-                    tts_thread = Thread(target=speak_task)
+                    # Thread the audio so that we can perform gestures while speaking
+                    tts_thread = Thread(target=self.speak_task, args=(text,))
                     tts_thread.start()
                     
                 else:
@@ -233,55 +189,12 @@ class NaoDialogflowCXDemo(SICApplication):
                 if reply.transcript:
                     self.logger.info("User said: {text}".format(text=reply.transcript))
                 
+                    gesture_logic(self.nao, reply, self.logger, self.custom_gestures)
 
-                    # --- GESTURE LOGIC ---
-                    gesture_found = False
-                    
-                    # 1. Check if any of our loaded custom gestures appear in the text
-                    # We iterate through our dictionary keys (run, fly, clap...)
-                    for word, recording in self.custom_gestures.items():
-                        if word.lower() in text.lower():
-                            self.logger.info(f"Triggering custom gesture: {word}")
-                            self.nao.motion_record.request(PlayRecording(recording), block=False)
-                            gesture_found = True
-                            break
-
-                    # Perform gestures based on detected intent (non-blocking)
-                    if reply.intent == "greeting":
-                        self.logger.info("Welcome intent detected - performing wave gesture")
-                        # Use send_message for non-blocking gesture execution
-                        # This allows the TTS to speak while the gesture is performed
-                        self.nao.motion.request(NaoPostureRequest("Stand", 0.5), block=False)
-                        self.nao.motion.request(NaoqiAnimationRequest("animations/Stand/Gestures/Hey_1"), block=False)
-                        #recording = NaoqiMotionRecording.load("gestures/fly")
-                        #self.nao.motion_record.request(PlayRecording(recording), block=False)
-
-                    # 2. If no custom gesture was found, check for the generic question mark
-                    elif not gesture_found and "?" in text:
-                        options = [
-                            "animations/Stand/Gestures/Explain_1", 
-                            "animations/Stand/Gestures/Explain_2", 
-                            "animations/Stand/Gestures/Explain_3"
-                        ]
-                        selected_anim = random.choice(options)
-                        self.logger.info(f"Playing built-in gesture: {selected_anim}")
-                        self.nao.motion.request(NaoqiAnimationRequest(selected_anim), block=False)
-                    # --- ------------------------ ---
-
-                    elif not gesture_found and "yipie" in text:
-                        self.logger.info(f"Playing celebration")
-                        self.nao.motion.request(NaoqiAnimationRequest("animations/Stand/Gestures/Enthusiastic_4"), block=False)
-
-                    # --- STEP 4: JOIN (OPTIONAL) ---
-                    # Ideally, you don't need to join here, but if you want to ensure
-                    # the loop doesn't restart until speaking is done:
+                    # Join so the loop doesn't restart until speaking is done
                     tts_thread.join()
                 else:
                     self.logger.info("No fulfillment message")
-                
-                # Log any parameters
-                if reply.parameters:
-                    self.logger.info("Parameters: {params}".format(params=reply.parameters))
                     
         except KeyboardInterrupt:
             self.logger.info("Demo interrupted by user")
@@ -295,5 +208,5 @@ class NaoDialogflowCXDemo(SICApplication):
 
 if __name__ == "__main__":
     # Create and run the demo
-    demo = NaoDialogflowCXDemo()
-    demo.run(enhanced_voice=True)
+    demo = NaoDialogflowCX(enhanced_voice=True)
+    demo.run()
