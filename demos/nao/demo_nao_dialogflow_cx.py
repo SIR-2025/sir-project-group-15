@@ -168,6 +168,7 @@ class NaoDialogflowCXDemo(SICApplication):
             self.shutdown()
 
     def handle_game_turn(self):
+        
         """Logic for the standard Dialogflow guessing game."""
         self.logger.info(f" ----- GAME MODE (Turn {self.turn_count}/{self.trigger_turn}) -----")
         self.logger.info(" ----- Your turn to talk!")
