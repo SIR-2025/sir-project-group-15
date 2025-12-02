@@ -210,5 +210,5 @@ class NaoDialogflowCX(SICApplication):
 
 if __name__ == "__main__":
     # Create and run the demo
-    demo = NaoDialogflowCX(enhanced_voice=True)
+    demo = NaoDialogflowCX(enhanced_voice=False)
     demo.run()
