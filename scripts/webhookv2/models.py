@@ -22,9 +22,11 @@ class GuessingGameModel:
 
     def validate_guess(self, user_answer):
         response_text = ""
+        guessed_right = False
         
         if user_answer in ('yes', 'yep', 'yeah', 'y', 'correct'):
             response_text = "yipie, I got it correct! Say 'reset' to play again."
+            guessed_right = True
         else:
             # Find the index of the animal we just guessed and remove it.
             guessed_idx = self.y[self.y == self.pending_guess_animal].index[0]
@@ -33,7 +35,7 @@ class GuessingGameModel:
             response_text = "Okay, not that. Let me think... "
             self.pending_guess_animal = None 
             
-        return response_text
+        return guessed_right, response_text
             
             
     def next_response(self, user_answer):

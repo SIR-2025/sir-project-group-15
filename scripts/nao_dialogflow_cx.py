@@ -57,7 +57,7 @@ class NaoDialogflowCX(SICApplication):
         super(NaoDialogflowCX, self).__init__()
         
         # Demo-specific initialization
-        self.nao_ip = "10.0.0.127"  # TODO: Replace with your NAO's IP address 10.15.2.86 / 10.0.0.245 / 169.254.195.109 / 10.0.0.127
+        self.nao_ip = "10.0.0.245"  # TODO: Replace with your NAO's IP address 10.15.2.86 / 10.0.0.245 / 169.254.195.109 / 10.0.0.127
         # Get the folder where this script is located
         script_dir = os.path.dirname(abspath(__file__))
         # Go up two levels from the script location to find the conf folder
@@ -67,6 +67,8 @@ class NaoDialogflowCX(SICApplication):
         self.session_id = np.random.randint(10000)
 
         self.set_log_level(sic_logging.INFO)
+        
+        self.enhanced_voice = enhanced_voice
         
         # Log files will only be written if set_log_file is called. Must be a valid full path to a directory.
         # self.set_log_file("/Users/apple/Desktop/SAIL/SIC_Development/sic_applications/demos/nao/logs")
