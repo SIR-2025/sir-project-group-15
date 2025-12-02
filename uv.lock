@@ -674,6 +674,24 @@ wheels = [
 ]
 
 [[package]]
+name = "ngrok"
+version = "1.6.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/57/58/f75dc9761abbaebb43c79f606d433ca83540c9be1c7549080a0741620338/ngrok-1.6.0-cp310-abi3-macosx_10_12_x86_64.macosx_11_0_arm64.macosx_10_12_universal2.whl", hash = "sha256:0b6c4779bdefaeb5e58b9ea2618e5e1e4521ff0dabb788b103ffc8b262cfcab4", size = 7167655 },
+    { url = "https://files.pythonhosted.org/packages/6b/50/475260ceda16c3d2d4905c792205cf9cec740709487537b7ef3504fe3724/ngrok-1.6.0-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:6ca623681402bbf60e312ab0343f7742740830e005dd99c79818611bff062982", size = 3723564 },
+    { url = "https://files.pythonhosted.org/packages/19/79/0862df07b6d14c589d41f9e3ebdc61d10d98cecadd4b8b60991c915e63d1/ngrok-1.6.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:53fac6c539971bd1346823dbcd53579b6600027cd8d4a27c92dea761f4753bed", size = 3459058 },
+    { url = "https://files.pythonhosted.org/packages/2b/59/5f243aa260265bee420c40cfc3f9dc3fe3434b2898872a1883ab709fd910/ngrok-1.6.0-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a48de799d464fd158713b63da5d581d415f0f182c1b8d5945f7abd2fa91f2b75", size = 5582618 },
+    { url = "https://files.pythonhosted.org/packages/35/a7/2ddee2488fa8bd00fa7346fa171d44fdbc1af19fc5f450b1db52a1a1ae49/ngrok-1.6.0-cp310-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:2ccc521201f7d65a565aa70d7babc21630df9583cf97a6d4404028519dd0851b", size = 4500819 },
+    { url = "https://files.pythonhosted.org/packages/24/5a/0c40eff63eb8a22503289b2d8430901fb945c0fcc774442cc8e8bb95461f/ngrok-1.6.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:eebdde36e49117f47d3741fb7fc5d511aa77dee2d52ad25ad99cce5f0b43b145", size = 3792523 },
+    { url = "https://files.pythonhosted.org/packages/29/fc/fa28f6b8727ddd995fe74be88362cc68f99884f0060b62ff8a127e00b8a4/ngrok-1.6.0-cp310-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:dcc5ea2b11c128b65e80721c86990261420003edf4da00229d46086887d77126", size = 3600231 },
+    { url = "https://files.pythonhosted.org/packages/ea/f8/5e76b57b8f2cae4e18dc29854c0262a590c1f239b8754e6d670288822478/ngrok-1.6.0-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:06bdb09073a36a5e7de73bf6659e09a00b2062e250b4a0abc2d80214d5a9368f", size = 3895674 },
+    { url = "https://files.pythonhosted.org/packages/91/a9/9a5a4077a17fc1bc2dd8085f7ca69a3ae2c40d6a270232049205c1635dff/ngrok-1.6.0-cp310-abi3-win32.whl", hash = "sha256:df5a6650d250efd5d76058a7e4297b077c5f953bddc6b010138a076edacf4a0c", size = 3197299 },
+    { url = "https://files.pythonhosted.org/packages/e5/4c/c088aba88b35f55070fb1ffe9dc847122e3814175288509c923724a1363f/ngrok-1.6.0-cp310-abi3-win_amd64.whl", hash = "sha256:3832f07228a93ed75f21c3021b7861012df9c84c409a75285de7f849c9de2bed", size = 3787020 },
+    { url = "https://files.pythonhosted.org/packages/94/76/b5cbc1d89c8ec530019e39c009da9c9e9d69ba70b5aecced8413a98dadf6/ngrok-1.6.0-cp310-abi3-win_arm64.whl", hash = "sha256:eddcacc9144765d012c236854befe40e78fd17b612d51efd32ac440476a96131", size = 3468837 },
+]
+
+[[package]]
 name = "numpy"
 version = "2.3.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1268,6 +1286,7 @@ dependencies = [
     { name = "google" },
     { name = "google-cloud-dialogflow" },
     { name = "google-cloud-dialogflow-cx" },
+    { name = "ngrok" },
     { name = "pandas" },
     { name = "scikit-learn" },
     { name = "social-interaction-cloud" },
@@ -1280,6 +1299,7 @@ requires-dist = [
     { name = "google", specifier = ">=3.0.0" },
     { name = "google-cloud-dialogflow", specifier = ">=2.43.0" },
     { name = "google-cloud-dialogflow-cx", specifier = ">=2.0.0" },
+    { name = "ngrok", specifier = ">=1.6.0" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "scikit-learn", specifier = ">=1.7.2" },
     { name = "social-interaction-cloud", specifier = ">=2.1.7" },

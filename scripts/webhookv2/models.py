@@ -20,7 +20,7 @@ class GuessingGameModel:
         self.MIN_ASKED_FEATURES_BEFORE_STUCK_CHECK = 5
         
 
-    def parse_user_answer(self, user_answer):
+    def validate_guess(self, user_answer):
         response_text = ""
         
         if user_answer in ('yes', 'yep', 'yeah', 'y', 'correct'):
@@ -47,7 +47,7 @@ class GuessingGameModel:
             return response_text
         
         if self.pending_guess_animal:
-            guessed_right, response_text = self.parse_user_answer(user_answer)
+            guessed_right, response_text = self.validate_guess(user_answer)
             if guessed_right:
                 return response_text
         

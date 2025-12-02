@@ -1,5 +1,6 @@
 from utils import get_session_id, jsonify_response
 from models import GuessingGameModel
+from run import app
 
 from flask import request
 

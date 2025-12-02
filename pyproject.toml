@@ -13,6 +13,7 @@ dependencies = [
     "google>=3.0.0",
     "google-cloud-dialogflow>=2.43.0",
     "google-cloud-dialogflow-cx>=2.0.0",
+    "ngrok>=1.6.0",
     "pandas>=2.3.3",
     "scikit-learn>=1.7.2",
     "social-interaction-cloud>=2.1.7",
