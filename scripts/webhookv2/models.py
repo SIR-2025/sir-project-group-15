@@ -9,7 +9,7 @@ class GuessingGameModel:
         self.session_id = session_id
         self.X, self.y = load_dataset(animal_dataset_path)
         
-        self.likeihoods = pd.Series(0.0, index=self.X.index)
+        self.likelihood = pd.Series(0.0, index=self.X.index)
         self.asked_features = set()
         self.useless_features = set()
         self.turn_count = 0
@@ -28,7 +28,7 @@ class GuessingGameModel:
         else:
             # Find the index of the animal we just guessed and remove it.
             guessed_idx = self.y[self.y == self.pending_guess_animal].index[0]
-            self.likeihoods = self.likeihoods.drop(guessed_idx)
+            self.likelihood = self.likelihood.drop(guessed_idx)
             
             response_text = "Okay, not that. Let me think... "
             self.pending_guess_animal = None 
@@ -43,8 +43,8 @@ class GuessingGameModel:
         '''    
         response_text = ""
         
-        if not (self.last_feature_asked and user_answer):
-            return response_text
+        # if not (self.last_feature_asked and user_answer):
+        #     return response_text
         
         if self.pending_guess_animal:
             guessed_right, response_text = self.validate_guess(user_answer)
@@ -66,8 +66,8 @@ class GuessingGameModel:
             self.asked_features.add(feature)
             response_text += f" {feature}?"
             
-            for i in self.likelihood.index: # Update likelihoods for next round
-                self.likelihood = update_likelihood(self.X.loc[i, feature], self.likelihood, i, self.answer)
+            for i in self.likelihood.index: # Update likelihood for next round
+                self.likelihood = update_likelihood(self.X.loc[i, feature], self.likelihood, i, user_answer)
             
             self.track_top_animals()
         
@@ -126,7 +126,7 @@ class GuessingGameModel:
         
             
     def reset_game(self):
-        self.likelihoods = pd.Series(0.0, index=self.X.index)
+        self.likelihood = pd.Series(0.0, index=self.X.index)
         self.asked_features = set()
         self.useless_features = set()
         self.turn_count = 0
