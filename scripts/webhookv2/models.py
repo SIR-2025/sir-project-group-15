@@ -1,5 +1,6 @@
 from guessing_algorithm import *
 from utils import load_dataset
+from responses import *
 
 import pandas as pd
 import random
@@ -29,13 +30,13 @@ class GuessingGameModel:
 
     def validate_guess(self, user_answer):
         if user_answer in ('yes', 'yep', 'yeah', 'y', 'correct'):
-            return True, "yipie, I got it correct! Say 'reset' to play again."
+            return True, CORRECT_GUESS_RESPONSE.format(animal=self.pending_guess_animal)
 
         guessed_idx = self.y[self.y == self.pending_guess_animal].index[0]
         self.likelihood = self.likelihood.drop(guessed_idx)
 
         self.pending_guess_animal = None
-        return False, "Okay, not that. Let me think... "
+        return False, WRONG_GUESS_RESPONSE
 
 
     def next_response(self, user_answer):
@@ -68,7 +69,7 @@ class GuessingGameModel:
             best_idx = self.likelihood.idxmax()
             animal = self.y[best_idx]
             self.pending_guess_animal = animal
-            return f"Is it a {animal}?"
+            return response_text + GUESS_RESPONSES.format(animal=animal)
 
         # 4. Otherwise pick the next feature
         if len(self.asked_features) == 0:
@@ -113,18 +114,12 @@ class GuessingGameModel:
             )
 
             if fallback:
-                response_text = (
-                    "It seems I'm not getting new information. "
-                    "Let me ask this again:"
-                )
+                response_text = STUCK_REASK_RESPONSE
                 feature = fallback
                 self.useless_features.add(feature)
             else:
                 animals = list(self.y[top_candidates])[:3]
-                response_text = (
-                    f"I seem stuck between: {', '.join(animals)}. "
-                    "I will try to guess next time."
-                )
+                response_text = STUCK_RESET_RESPONSE.format(stuck_animals=", ".join(animals))
                 got_stuck = True
         else:
             top_candidates = self.likelihood[self.likelihood == self.likelihood.max()].index

@@ -1,0 +1,5 @@
+GUESS_RESPONSES = "Are you thinking of a {animal}?"
+STUCK_REASK_RESPONSE = "I'm having trouble guessing your animal. Let's start over!"
+STUCK_RESET_RESPONSE = "I couldn't guess your animal, i'm stuck between these animals: {stuck_animals}. Let's try again from the beginning!"
+CORRECT_GUESS_RESPONSE = "yipie, I got it correct! Your animal is indeed a {animal}. Tell me when you want to play again."
+WRONG_GUESS_RESPONSE = "Oh no, I couldn't guess your animal. Let me think of something else."
