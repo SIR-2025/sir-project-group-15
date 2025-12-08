@@ -2,13 +2,12 @@ from flask import Flask
 
 app = Flask(__name__)
 
-from utils import get_session_id, jsonify_response
+from utils import get_session_id, jsonify_response, ANIMAL_DATASET_PATH
 from models import GuessingGameModel
 
 from flask import request
 
 models = {}
-ANIMAL_DATASET_PATH = "animal_dataset.csv"
 
 @app.route("/", methods=["POST"])
 def webhook():

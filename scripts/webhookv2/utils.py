@@ -1,6 +1,10 @@
 import pandas as pd
 import re
 from flask import jsonify
+import os
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+ANIMAL_DATASET_PATH = os.path.join(BASE_DIR, "animal_dataset.csv")
 
 def load_dataset(dataset_path):
     df = pd.read_csv(dataset_path)
