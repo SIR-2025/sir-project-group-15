@@ -7,6 +7,7 @@ import random
 
 class GuessingGameModel:
     first_question_counter = 0
+    global_asked_features = set()
     def __init__(self, session_id, animal_dataset_path):
         self.session_id = session_id
 
@@ -90,6 +91,12 @@ class GuessingGameModel:
 
         # Save this feature so NEXT user_answer updates likelihood correctly
         self.last_feature_asked = feature
+
+        # If this feature was asked in another game before → do NOT use extra_text
+        if feature in GuessingGameModel.global_asked_features:
+            return response_text + f" {feature}?"
+        
+        GuessingGameModel.global_asked_features.add(feature)
         if text_idx is None:
             return response_text + f" {feature}?"
         else:
