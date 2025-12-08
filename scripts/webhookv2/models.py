@@ -5,10 +5,15 @@ import pandas as pd
 import random
 
 class GuessingGameModel:
+    first_question_counter = 0
     def __init__(self, session_id, animal_dataset_path):
         self.session_id = session_id
+
+        options = [0, 8, 20]
+        self.first_feature_index = options[GuessingGameModel.first_question_counter % 3]
+        GuessingGameModel.first_question_counter += 1
+
         self.X, self.y = load_dataset(animal_dataset_path)
-        
         self.likelihood = pd.Series(0.0, index=self.X.index)
         self.asked_features = set()
         self.useless_features = set()
@@ -19,6 +24,8 @@ class GuessingGameModel:
         
         self.MIN_ASKED_FEATURES_BEFORE_STUCK_CHECK = 5
 
+        with open('extra_text.txt', 'r', encoding='utf-8') as f:
+            self.extra_text = f.read().splitlines()
 
     def validate_guess(self, user_answer):
         if user_answer in ('yes', 'yep', 'yeah', 'y', 'correct'):
@@ -64,7 +71,14 @@ class GuessingGameModel:
             return f"Is it a {animal}?"
 
         # 4. Otherwise pick the next feature
-        feature, response_text, got_stuck = self.get_next_feature()
+        if len(self.asked_features) == 0:
+            feature = self.X.columns[self.first_feature_index]
+            response_text = ""
+            got_stuck = False
+            text_idx = self.first_feature_index
+        else:
+            feature, response_text, got_stuck, text_idx = self.get_next_feature()
+
 
         if got_stuck:
             self.reset_game()
@@ -75,8 +89,10 @@ class GuessingGameModel:
 
         # Save this feature so NEXT user_answer updates likelihood correctly
         self.last_feature_asked = feature
-
-        return response_text + f" {feature}?"
+        if text_idx is None:
+            return response_text + f" {feature}?"
+        else:
+            return self.extra_text[text_idx] + response_text + f" {feature}?"
 
 
     def get_next_feature(self):
@@ -84,6 +100,7 @@ class GuessingGameModel:
         feature = None
         response_text = ""
         got_stuck = False
+        text_idx = None
         
         if len(self.likelihood) > 1 \
             and check_stuck(self.top_history, self.likelihood, top_n=3, required_repeats=4) \
@@ -111,11 +128,11 @@ class GuessingGameModel:
                 got_stuck = True
         else:
             top_candidates = self.likelihood[self.likelihood == self.likelihood.max()].index
-            feature = best_feature_to_ask(
+            feature, text_idx = best_feature_to_ask(
                 self.X, candidate_animals=top_candidates, asked_features=self.asked_features
             )
 
-        return feature, response_text, got_stuck
+        return feature, response_text, got_stuck, text_idx
 
 
     def track_top_animals(self):

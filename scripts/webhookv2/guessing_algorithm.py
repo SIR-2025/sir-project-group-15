@@ -9,15 +9,17 @@ def best_feature_to_ask(X, candidate_animals=None, asked_features=None):
         X_sub = X.loc[candidate_animals]
     if asked_features:
         X_sub = X_sub.drop(columns=asked_features)
+    best_split = float('inf')
     best_feature = None
-    best_split = 1.0
+    
     for feature in X_sub.columns:
         yes_ratio = (X_sub[feature] == 1).mean()
         split_quality = abs(0.5 - yes_ratio)
         if split_quality < best_split:
             best_split = split_quality
             best_feature = feature
-    return best_feature
+    best_index = X.columns.get_loc(best_feature)
+    return best_feature, best_index
 
 def update_likelihood(animal_value, likelihood, i, answer):
     '''
