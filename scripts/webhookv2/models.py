@@ -7,6 +7,7 @@ import random
 
 class GuessingGameModel:
     first_question_counter = 0
+    global_asked_features = set()
     def __init__(self, session_id, animal_dataset_path):
         self.session_id = session_id
 
@@ -19,6 +20,7 @@ class GuessingGameModel:
         self.asked_features = set()
         self.useless_features = set()
         self.turn_count = 0
+        self.question_number = 0
         self.last_feature_asked = None
         self.pending_guess_animal = None
         self.top_history = []
@@ -88,12 +90,25 @@ class GuessingGameModel:
         # Mark the feature as asked
         self.asked_features.add(feature)
 
+        #Keep track of number of questions to implement extra text for odd-numbered questions
+        self.question_number += 1
+
         # Save this feature so NEXT user_answer updates likelihood correctly
         self.last_feature_asked = feature
-        if text_idx is None:
-            return response_text + f" {feature}?"
-        else:
+
+        # Rule 1: extra text only on odd-numbered questions
+        use_extra = (self.question_number % 2 == 1)
+
+        # Rule 2: if this feature was used globally before → no extra text
+        if feature in GuessingGameModel.global_asked_features:
+            use_extra = False
+
+        # Rule 3: only mark globally if extra text is ACTUALLY used this time
+        if use_extra and text_idx is not None:
+            GuessingGameModel.global_asked_features.add(feature)
             return self.extra_text[text_idx] + response_text + f" {feature}?"
+        else:
+            return response_text + f" {feature}?"
 
 
     def get_next_feature(self):
