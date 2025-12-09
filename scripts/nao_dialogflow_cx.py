@@ -2,7 +2,6 @@
 from handle_gestures import gesture_logic, setup_gestures
 
 # Import basic preliminaries
-import os
 from sic_framework.core.sic_application import SICApplication
 from sic_framework.core import sic_logging
 from threading import Thread
@@ -11,6 +10,14 @@ from elevenlabs import ElevenLabs
 # Import the device(s) we will be using
 from sic_framework.devices import Nao
 from sic_framework.devices.nao import NaoqiTextToSpeechRequest
+
+# Face tracking imports
+from sic_framework.devices.common_naoqi.naoqi_stiffness import Stiffness
+from sic_framework.devices.common_naoqi.naoqi_tracker import (
+    RemoveTargetRequest,
+    StartTrackRequest,
+    StopAllTrackRequest,
+)
 
 # Import the service(s) we will be using
 from sic_framework.services.dialogflow_cx.dialogflow_cx import (
@@ -25,7 +32,9 @@ from sic_framework.core.message_python2 import AudioRequest
 import json
 from os.path import abspath, join
 import numpy as np
+import os
 
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 class NaoDialogflowCX(SICApplication):
     """
@@ -57,11 +66,10 @@ class NaoDialogflowCX(SICApplication):
         super(NaoDialogflowCX, self).__init__()
         
         # Demo-specific initialization
-        self.nao_ip = "10.0.0.245"  # TODO: Replace with your NAO's IP address 10.15.2.86 / 10.0.0.245 / 169.254.195.109 / 10.0.0.127
+        self.nao_ip = "10.0.0.127"  # TODO: Replace with your NAO's IP address 10.15.2.86 / 10.0.0.245 / 169.254.195.109 / 10.0.0.127
         # Get the folder where this script is located
-        script_dir = os.path.dirname(abspath(__file__))
         # Go up two levels from the script location to find the conf folder
-        self.dialogflow_keyfile_path = join(script_dir, "..", "conf", "google", "google-key.json")
+        self.dialogflow_keyfile_path = join(BASE_DIR, "conf", "google", "google-key.json")
         self.nao = None
         self.dialogflow_cx = None
         self.session_id = np.random.randint(10000)
@@ -102,13 +110,12 @@ class NaoDialogflowCX(SICApplication):
                         ) # returns bytes of audio file
                         
             sample_rate = 16000
-            
             speech_bytes = b"".join(speech)
 
             message = AudioRequest(sample_rate=sample_rate, waveform=speech_bytes)
             self.nao.speaker.request(message)
         else:
-            tts_request = NaoqiTextToSpeechRequest(text=text, sample_rate=16000)
+            tts_request = NaoqiTextToSpeechRequest(text=text)
             self.nao.tts.request(tts_request)
         
     def setup(self):
@@ -126,9 +133,9 @@ class NaoDialogflowCX(SICApplication):
             keyfile_json = json.load(f)
         
         # Agent configuration
-        agent_id = "d9d2ea8b-d3ac-4965-9e3e-7ea1108528c5"  # Replace with your agent ID
+        # agent_id = "d9d2ea8b-d3ac-4965-9e3e-7ea1108528c5"  # Test agent
+        agent_id = "4447968a-ea99-4077-9ad3-5a3a0f127b7b"  # Main agent
         location = "europe-west4"  # Replace with your agent location if different
-        
         # Create configuration for Dialogflow CX
         dialogflow_conf = DialogflowCXConf(
             keyfile_json=keyfile_json,
@@ -146,20 +153,27 @@ class NaoDialogflowCX(SICApplication):
         self.dialogflow_cx.register_callback(callback=self.on_recognition)
         
         # Setup ElevenLabs for TTS
-        with open(abspath(join("..", "conf", "elevenlabs", "api-key.json"))) as f:
+        with open(abspath(join(BASE_DIR, "conf", "elevenlabs", "api-key.json"))) as f:
             keyfile_json = json.load(f)
             elvenlabs_api_key = keyfile_json["EL_API_KEY"]
         
         self.tts_client = ElevenLabs(base_url="https://api.elevenlabs.io", api_key=elvenlabs_api_key)
         
         # Load custom gestures
-        gesture_folder = "gestures"
+        gesture_folder = abspath(join(BASE_DIR, "scripts", "gestures"))
         self.custom_gestures = setup_gestures(gesture_folder, self.logger)
     
     def run(self):
         """Main application loop."""
         try:    
             self.logger.info(" -- Ready -- ")
+            
+            # start tracking face
+            self.logger.info("Starting face tracking...")
+            self.nao.stiffness.request(Stiffness(stiffness=1.0, joints=["Head"]))
+            self.nao.tracker.request(
+                StartTrackRequest(target_name="Face", size=0.2, mode="Head", effector="None")
+            )
             
             while not self.shutdown_event.is_set():
                 self.logger.info(" ----- Your turn to talk!")
