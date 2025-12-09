@@ -14,9 +14,7 @@ from sic_framework.devices.nao import NaoqiTextToSpeechRequest
 # Face tracking imports
 from sic_framework.devices.common_naoqi.naoqi_stiffness import Stiffness
 from sic_framework.devices.common_naoqi.naoqi_tracker import (
-    RemoveTargetRequest,
     StartTrackRequest,
-    StopAllTrackRequest,
 )
 
 # Import the service(s) we will be using
@@ -25,6 +23,13 @@ from sic_framework.services.dialogflow_cx.dialogflow_cx import (
     DialogflowCXConf,
     DetectIntentRequest,
 )
+
+# Import NAO LED control requests
+from sic_framework.devices.common_naoqi.naoqi_leds import (
+    NaoFadeRGBRequest,
+    NaoLEDRequest,
+)
+import time
 
 from sic_framework.core.message_python2 import AudioRequest
 
@@ -162,6 +167,17 @@ class NaoDialogflowCX(SICApplication):
         # Load custom gestures
         gesture_folder = abspath(join(BASE_DIR, "scripts", "gestures"))
         self.custom_gestures = setup_gestures(gesture_folder, self.logger)
+        
+    def control_leds(self, turn_on=True):
+        if turn_on:
+             self.logger.info("Requesting Ear LEDs to turn on")
+             self.nao.leds.request(NaoLEDRequest("EarLeds", True))
+             time.sleep(1)
+             self.nao.leds.request(NaoFadeRGBRequest("RightEarLeds", 0, 0, 1, 0))
+             self.nao.leds.request(NaoFadeRGBRequest("LeftEarLeds", 0, 0, 1, 0))
+        else:
+            self.logger.info("Requesting Ear LEDs to turn off")
+            self.nao.leds.request(NaoLEDRequest("EarLeds", False))
     
     def run(self):
         """Main application loop."""
@@ -177,6 +193,7 @@ class NaoDialogflowCX(SICApplication):
             
             while not self.shutdown_event.is_set():
                 self.logger.info(" ----- Your turn to talk!")
+                Thread(target=self.control_leds, args=(True,)).start()
                 
                 # Request intent detection with the current session
                 reply = self.dialogflow_cx.request(DetectIntentRequest(self.session_id))
@@ -190,6 +207,8 @@ class NaoDialogflowCX(SICApplication):
 
                 # Speak the agent's response using NAO's text-to-speech
                 if reply.fulfillment_message: 
+                    self.control_leds(turn_on=False)
+                    
                     text = reply.fulfillment_message
                     self.logger.info("NAO reply: {text}".format(text=text))
 
@@ -201,7 +220,7 @@ class NaoDialogflowCX(SICApplication):
                 else:
                     self.logger.info("No intent detected")
                 
-                # Log the transcript
+                # Log the transcript and perform gestures
                 if reply.transcript:
                     self.logger.info("User said: {text}".format(text=reply.transcript))
                 
