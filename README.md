@@ -33,6 +33,37 @@ source .venv/bin/activate
 pip install . 
 # installs needed packages see pyproject.toml
 ```
+
+## Running code
+ - To run NAO demos, ensure your NAO robot is powered on and connected to the same network as your development machine.
+ - Remain in the root project directory and execute the scripts to launch guessing game and the webhook server.
+  
+  Prerequisites:
+  - Redis
+  - Ngrok
+
+Prepare Redis and dialogflow:
+```bash
+redis-server start conf/redis/redis.conf
+```
+```bash
+run-dialogflow-cx
+```
+
+Launch the webhook server:
+```bash
+python scripts/webhookv2/run.py
+```
+
+Expose webhook to the internet using ngrok:
+```bash
+ngrok http 8080
+```
+This will give you a public URL to set as your Dialogflow CX webhook
+Now you can test using DialogFlow CX console or on the NAO robot using the `scripts/nao_dialogflow_gemini.py` script (or `scripts/nao_dialogflow_cx.py` for non-Gemini versions).
+
+Host live
+
 ## File descriptions
 Project scripts
  - `scripts/animal_guessing_game.ipynb` — Jupyter notebook showcasing the logic / dataset exploration for the animal-guessing game.
