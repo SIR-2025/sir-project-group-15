@@ -73,7 +73,7 @@ class GuessingGameModel:
        #Max question limit activation
         if self.question_number >= 12:
             self.awaiting_user_animal = True
-            return "I don't know... please tell me which animal you were thinking of."
+            return MAX_QUESTION_LIMIT_RESPONSE 
         # ----------------------------------------------------------
 
         # 5. Otherwise pick next feature
@@ -189,3 +189,10 @@ class GuessingGameModel:
         self.last_feature_asked = None
         self.pending_guess_animal = None
         self.top_history = []
+        self.question_number = 0
+        self.awaiting_user_animal = False
+        self.answer_history = {}
+        
+        options = [0, 8, 20]
+        self.first_feature_index = options[GuessingGameModel.first_question_counter % 3]
+        GuessingGameModel.first_question_counter += 1
