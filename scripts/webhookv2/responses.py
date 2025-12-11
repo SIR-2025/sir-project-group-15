@@ -1,6 +1,7 @@
 GUESS_RESPONSES = "Are you thinking of a {animal}?"
 STUCK_REASK_RESPONSE = "I'm having trouble guessing your animal. Let's revisit some already asked questions!"
-STUCK_RESET_RESPONSE = "I couldn't guess your animal based on your answers, i'm stuck between these animals: {stuck_animals}. Let's start over! Tell me when you want to reset."
+STUCK_RESET_RESPONSE = "I couldn't guess your animal based on your answers, i'm stuck between these animals: {stuck_animals}. Let's start over!"
 CORRECT_GUESS_RESPONSE = "yipie, I got it correct! Your animal is indeed a {animal}. Tell me when you want to reset."
 WRONG_GUESS_RESPONSE = "Oh no, I couldn't guess your animal. Let me think of something else."
 START_OVER_RESPONSE = "I am sorry but I don't know your animal. Do you want to play again?"
+MAX_QUESTION_LIMIT_RESPONSE = "I don't know what animal you have in mind, maybe next time! Tell me when you want to reset."
