@@ -49,11 +49,18 @@ def gesture_logic(nao, reply, logger, custom_gestures):
     if reply.intent == "greeting":
         logger.info("Welcome intent detected - performing wave gesture")
 
-        do_builtin_gesture(nao, "Stand", logger)
-        do_builtin_gesture(nao, "animations/Stand/Gestures/Hey_1", logger)
+        nao.motion.request(NaoqiAnimationRequest("animations/Stand/Gestures/Hey_1"), block=False)
 
-    # 2. If no custom gesture was found, check for the generic question mark
-    elif not gesture_found and "?" in text:
+    elif not gesture_found and "yipie" in text:
+        logger.info(f"Playing celebration")
+        nao.motion.request(NaoqiAnimationRequest("animations/Stand/Gestures/Enthusiastic_4"), block=False)
+        
+    elif not gesture_found and "reset" in text:
+        logger.info(f"Playing custom dissapointed gesture")
+        disappointed = custom_gestures.get("shake_head")
+        nao.motion_record.request(PlayRecording(disappointed), block=False)
+
+    elif not gesture_found:
         options = [
             "animations/Stand/Gestures/Explain_1", 
             "animations/Stand/Gestures/Explain_2", 
@@ -61,23 +68,4 @@ def gesture_logic(nao, reply, logger, custom_gestures):
         ]
         selected_anim = random.choice(options)
         logger.info(f"Playing built-in gesture: {selected_anim}")
-        do_builtin_gesture(nao, selected_anim, logger)
-
-    elif not gesture_found and "yipie" in text:
-        logger.info(f"Playing celebration")
-        do_builtin_gesture(nao, "animations/Stand/Gestures/Enthusiastic_4", logger)
-        
-def do_custom_gesture(nao, gesture_name, logger, custom_gestures):
-    """Function to trigger a custom gesture by name."""
-    if gesture_name in custom_gestures:
-        logger.info(f"Triggering custom gesture: {gesture_name}")
-        recording = custom_gestures[gesture_name]
-        nao.motion_record.request(PlayRecording(recording), block=False)
-    else:
-        logger.warning(f"Gesture '{gesture_name}' not found in custom gestures.")
-        
-def do_builtin_gesture(nao, animation_name, logger):
-    """Function to trigger a built-in animation gesture by name."""
-    logger.info(f"Playing built-in gesture: {animation_name}")
-    nao.motion.request(NaoqiAnimationRequest(animation_name), block=False)
-    
+        nao.motion.request(NaoqiAnimationRequest(selected_anim), block=False)
