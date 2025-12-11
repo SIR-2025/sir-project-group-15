@@ -17,6 +17,7 @@ dependencies = [
     "pandas>=2.3.3",
     "scikit-learn>=1.7.2",
     "social-interaction-cloud>=2.1.7",
+    "vertexai>=1.71.1",
 ]
 
 [tool.setuptools.packages.find]

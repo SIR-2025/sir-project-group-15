@@ -71,7 +71,7 @@ class NaoDialogflowCX(SICApplication):
         super(NaoDialogflowCX, self).__init__()
         
         # Demo-specific initialization
-        self.nao_ip = "10.0.0.127"  # TODO: Replace with your NAO's IP address 10.15.2.86 / 10.0.0.245 / 169.254.195.109 / 10.0.0.127
+        self.nao_ip = "10.0.0.154"  # TODO: Replace with your NAO's IP address 10.15.2.86 / 10.0.0.245 / 169.254.195.109 / 10.0.0.127
         # Get the folder where this script is located
         # Go up two levels from the script location to find the conf folder
         self.dialogflow_keyfile_path = join(BASE_DIR, "conf", "google", "google-key.json")
@@ -147,7 +147,7 @@ class NaoDialogflowCX(SICApplication):
             agent_id=agent_id,
             location=location,
             sample_rate_hertz=16000,  # NAO's microphone sample rate
-            language="en"
+            language="en",
         )
         
         # Initialize Dialogflow CX with NAO's microphone as input

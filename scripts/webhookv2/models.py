@@ -3,6 +3,7 @@ from utils import load_dataset
 from responses import *
 
 import pandas as pd
+from threading import Thread
 import random
 
 class GuessingGameModel:
@@ -50,6 +51,7 @@ class GuessingGameModel:
         if self.pending_guess_animal:
             guessed_right, response_text = self.validate_guess(user_answer)
             if guessed_right:
+                self.reset_game()
                 return response_text
             # else continue to ask next question
 
