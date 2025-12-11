@@ -11,6 +11,9 @@ from elevenlabs import ElevenLabs
 from sic_framework.devices import Nao
 from sic_framework.devices.nao import NaoqiTextToSpeechRequest
 
+# Posture and animation imports
+from sic_framework.devices.common_naoqi.naoqi_motion import NaoPostureRequest
+
 # Face tracking imports
 from sic_framework.devices.common_naoqi.naoqi_stiffness import Stiffness
 from sic_framework.devices.common_naoqi.naoqi_tracker import (
@@ -187,6 +190,7 @@ class NaoDialogflowCX(SICApplication):
             # start tracking face
             self.logger.info("Starting face tracking...")
             self.nao.stiffness.request(Stiffness(stiffness=1.0, joints=["Head"]))
+            self.nao.motion.request(NaoPostureRequest("Stand", 0.5), block=False)
             self.nao.tracker.request(
                 StartTrackRequest(target_name="Face", size=0.2, mode="Head", effector="None")
             )

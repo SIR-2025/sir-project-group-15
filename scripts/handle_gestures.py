@@ -49,7 +49,6 @@ def gesture_logic(nao, reply, logger, custom_gestures):
     if reply.intent == "greeting":
         logger.info("Welcome intent detected - performing wave gesture")
 
-        nao.motion.request(NaoPostureRequest("Stand", 0.5), block=False)
         nao.motion.request(NaoqiAnimationRequest("animations/Stand/Gestures/Hey_1"), block=False)
 
     elif not gesture_found and "yipie" in text:
