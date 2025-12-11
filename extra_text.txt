@@ -21,6 +21,7 @@
 'You would not expect this, but many animals are native to Australia. Lots of birds and fish originated in Australia.',
 'The next question is about omnivores. Omni means “all”, so these are the animals that eat everything, both plants and meat.',
 'Most fish are very fast in water, especially compared to humans. However there are a few which are not so fast. Have you ever heard of starfish? They lie still on the bottom of the ocean without moving.'
+'This question is about spots. Here I only mean animals that always have spots. Ignore animals that sometimes have spots, like cows or dogs.'
 
 
 

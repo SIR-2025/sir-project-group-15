@@ -9,6 +9,7 @@ import random
 class GuessingGameModel:
     first_question_counter = 0
     global_asked_features = set()
+
     def __init__(self, session_id, animal_dataset_path):
         self.session_id = session_id
 
@@ -25,37 +26,31 @@ class GuessingGameModel:
         self.last_feature_asked = None
         self.pending_guess_animal = None
         self.top_history = []
-        
+        self.awaiting_user_animal = False
+        self.answer_history = {}
         self.MIN_ASKED_FEATURES_BEFORE_STUCK_CHECK = 5
 
         with open('extra_text.txt', 'r', encoding='utf-8') as f:
             self.extra_text = f.read().splitlines()
 
-    def validate_guess(self, user_answer):
-        if user_answer in ('yes', 'yep', 'yeah', 'y', 'correct'):
-            return True, CORRECT_GUESS_RESPONSE.format(animal=self.pending_guess_animal)
-
-        guessed_idx = self.y[self.y == self.pending_guess_animal].index[0]
-        self.likelihood = self.likelihood.drop(guessed_idx)
-
-        self.pending_guess_animal = None
-        return False, WRONG_GUESS_RESPONSE
-
-
     def next_response(self, user_answer):
-        """Main method to process user answer and return next question/guess."""
-        
         response_text = ""
 
-        # 1. If last turn was a guess, handle it
+        # 1. If waiting for confirmation of animal
+        if self.awaiting_user_animal:
+            animal_name = user_answer.strip()
+            self.awaiting_user_animal = False
+            self.reset_game()
+            return f"Thanks! I am sorry I could not guess. Do you want to play again?."
+        
+        # 2. If last turn was a guess...
         if self.pending_guess_animal:
             guessed_right, response_text = self.validate_guess(user_answer)
             if guessed_right:
                 self.reset_game()
                 return response_text
-            # else continue to ask next question
 
-        # 2. If we have a last feature, update likelihood
+        # 3. Update likelihood
         if self.last_feature_asked is not None:
             feature = self.last_feature_asked
             for i in self.likelihood.index:
@@ -68,14 +63,20 @@ class GuessingGameModel:
             self.last_feature_asked = None
             self.track_top_animals()
 
-        # 3. Check if confident enough to guess
+        # 4. Check if confident enough
         if is_confident_enough(self.likelihood):
             best_idx = self.likelihood.idxmax()
             animal = self.y[best_idx]
             self.pending_guess_animal = animal
             return response_text + GUESS_RESPONSES.format(animal=animal)
 
-        # 4. Otherwise pick the next feature
+       #Max question limit activation
+        if self.question_number >= 15:
+            self.awaiting_user_animal = True
+            return "I don't know... please tell me which animal you were thinking of."
+        # ----------------------------------------------------------
+
+        # 5. Otherwise pick next feature
         if len(self.asked_features) == 0:
             feature = self.X.columns[self.first_feature_index]
             response_text = ""
@@ -84,33 +85,50 @@ class GuessingGameModel:
         else:
             feature, response_text, got_stuck, text_idx = self.get_next_feature()
 
-
         if got_stuck:
-            self.reset_game()
-            return response_text
+            self.awaiting_user_animal = True
+            return response_text + "What was the animal you were thinking of?"
 
-        # Mark the feature as asked
         self.asked_features.add(feature)
 
-        #Keep track of number of questions to implement extra text for odd-numbered questions
+        # Count questions
         self.question_number += 1
 
-        # Save this feature so NEXT user_answer updates likelihood correctly
         self.last_feature_asked = feature
 
-        # Rule 1: extra text only on odd-numbered questions
         use_extra = (self.question_number % 2 == 1)
-
-        # Rule 2: if this feature was used globally before → no extra text
         if feature in GuessingGameModel.global_asked_features:
             use_extra = False
 
-        # Rule 3: only mark globally if extra text is ACTUALLY used this time
         if use_extra and text_idx is not None:
             GuessingGameModel.global_asked_features.add(feature)
             return self.extra_text[text_idx] + response_text + f" {feature}?"
         else:
             return response_text + f" {feature}?"
+        
+    def validate_guess(self, user_answer):
+        """
+        Validate the user's yes/no answer for a guess.
+        Returns (guessed_right: bool, text: str)
+        """
+        # Normalize answer
+        ans = user_answer.lower().strip()
+
+        if ans in ("yes", "y", "correct"):
+            msg = f"Great! I guessed it right — you were thinking of {self.pending_guess_animal}!"
+            self.pending_guess_animal = None
+            return True, msg
+
+        # When users says no, remove animal
+        guessed = self.pending_guess_animal
+        guessed_idx = self.y[self.y == guessed].index[0]
+
+        # Remove from likelihood 
+        self.likelihood = self.likelihood.drop(guessed_idx)
+
+        msg = "Okay, let's keep going."
+        self.pending_guess_animal = None
+        return False, msg
 
 
     def get_next_feature(self):
