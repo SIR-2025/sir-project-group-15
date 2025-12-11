@@ -73,7 +73,8 @@ class GuessingGameModel:
        #Max question limit activation
         if self.question_number >= 12:
             self.awaiting_user_animal = True
-            return MAX_QUESTION_LIMIT_RESPONSE 
+            self.reset_game()
+            return START_OVER_RESPONSE 
         # ----------------------------------------------------------
 
         # 5. Otherwise pick next feature
@@ -93,7 +94,6 @@ class GuessingGameModel:
         #Max question limit activation
         if self.question_number >= 12:
             self.reset_game()
-            #self.awaiting_user_animal = True
             return START_OVER_RESPONSE
 
         self.asked_features.add(feature)
@@ -112,30 +112,16 @@ class GuessingGameModel:
             return self.extra_text[text_idx] + response_text + f" {feature}?"
         else:
             return response_text + f" {feature}?"
-        
+    
     def validate_guess(self, user_answer):
-        """
-        Validate the user's yes/no answer for a guess.
-        Returns (guessed_right: bool, text: str)
-        """
-        # Normalize answer
-        ans = user_answer.lower().strip()
+        if user_answer in ('yes', 'yep', 'yeah', 'y', 'correct'):
+            return True, CORRECT_GUESS_RESPONSE.format(animal=self.pending_guess_animal)
 
-        if ans in ("yes", "y", "correct"):
-            msg = f"Great! I guessed it right — you were thinking of {self.pending_guess_animal}!"
-            self.pending_guess_animal = None
-            return True, msg
-
-        # When users says no, remove animal
-        guessed = self.pending_guess_animal
-        guessed_idx = self.y[self.y == guessed].index[0]
-
-        # Remove from likelihood 
+        guessed_idx = self.y[self.y == self.pending_guess_animal].index[0]
         self.likelihood = self.likelihood.drop(guessed_idx)
 
-        msg = "Okay, let's keep going."
         self.pending_guess_animal = None
-        return False, msg
+        return False, WRONG_GUESS_RESPONSE
 
 
     def get_next_feature(self):
