@@ -74,7 +74,7 @@ class GuessingGameModel:
         if self.question_number >= 12:
             self.awaiting_user_animal = True
             self.reset_game()
-            return START_OVER_RESPONSE 
+            return START_OVER_RESPONSE.format(highest_likelihood_animal=self.y[self.likelihood.idxmax()])
         # ----------------------------------------------------------
 
         # 5. Otherwise pick next feature
@@ -87,14 +87,14 @@ class GuessingGameModel:
             feature, response_text, got_stuck, text_idx = self.get_next_feature()
 
         if got_stuck:
-            final_text = response_text + START_OVER_RESPONSE
+            final_text = response_text + START_OVER_RESPONSE.format(highest_likelihood_animal=self.y[self.likelihood.idxmax()])
             self.reset_game()  # reset AFTER preparing final_text
             return final_text
         
         #Max question limit activation
         if self.question_number >= 12:
             self.reset_game()
-            return START_OVER_RESPONSE
+            return START_OVER_RESPONSE.format(highest_likelihood_animal=self.y[self.likelihood.idxmax()])
 
         self.asked_features.add(feature)
 

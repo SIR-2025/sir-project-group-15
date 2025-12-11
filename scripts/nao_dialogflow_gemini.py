@@ -149,8 +149,9 @@ class NaoDialogflowCX(SICApplication):
         with open(self.dialogflow_keyfile_path) as f:
             keyfile_json = json.load(f)
         
-        agent_id = "d9d2ea8b-d3ac-4965-9e3e-7ea1108528c5" # Main Agent 4447968a-ea99-4077-9ad3-5a3a0f127b7b // test: d9d2ea8b-d3ac-4965-9e3e-7ea1108528c5
-        
+        # agent_id = "d9d2ea8b-d3ac-4965-9e3e-7ea1108528c5" # Main Agent 4447968a-ea99-4077-9ad3-5a3a0f127b7b // test: d9d2ea8b-d3ac-4965-9e3e-7ea1108528c5
+        agent_id = "4447968a-ea99-4077-9ad3-5a3a0f127b7b"  # Main agent
+
         dialogflow_conf = DialogflowCXConf(
             keyfile_json=keyfile_json,
             agent_id=agent_id,
@@ -404,5 +405,5 @@ class NaoDialogflowCX(SICApplication):
         tts_thread.join()
 
 if __name__ == "__main__":
-    demo = NaoDialogflowCX(enhanced_voice=False)
+    demo = NaoDialogflowCX(enhanced_voice=True)
     demo.run()
