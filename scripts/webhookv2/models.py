@@ -27,7 +27,7 @@ class GuessingGameModel:
         self.top_history = []
         self.awaiting_user_animal = False
         self.answer_history = {}
-        self.MIN_ASKED_FEATURES_BEFORE_STUCK_CHECK = 5
+        self.MIN_ASKED_FEATURES_BEFORE_STUCK_CHECK = 4
 
         with open('extra_text.txt', 'r', encoding='utf-8') as f:
             self.extra_text = f.read().splitlines()
@@ -69,7 +69,7 @@ class GuessingGameModel:
             return response_text + GUESS_RESPONSES.format(animal=animal)
 
        #Max question limit activation
-        if self.question_number >= 15:
+        if self.question_number >= 12:
             self.awaiting_user_animal = True
             return "I don't know... please tell me which animal you were thinking of."
         # ----------------------------------------------------------
