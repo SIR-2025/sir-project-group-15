@@ -70,11 +70,6 @@ class GuessingGameModel:
             self.pending_guess_animal = animal
             return response_text + GUESS_RESPONSES.format(animal=animal)
 
-       #Max question limit activation
-        if self.question_number >= 12:
-            self.awaiting_user_animal = True
-            return "I don't know... please tell me which animal you were thinking of."
-        # ----------------------------------------------------------
 
         # 5. Otherwise pick next feature
         if len(self.asked_features) == 0:
@@ -86,8 +81,15 @@ class GuessingGameModel:
             feature, response_text, got_stuck, text_idx = self.get_next_feature()
 
         if got_stuck:
-            self.awaiting_user_animal = True
-            return response_text + "What was the animal you were thinking of?"
+            final_text = response_text + START_OVER_RESPONSE
+            self.reset_game()  # reset AFTER preparing final_text
+            return final_text
+        
+        #Max question limit activation
+        if self.question_number >= 12:
+            self.reset_game()
+            #self.awaiting_user_animal = True
+            return START_OVER_RESPONSE
 
         self.asked_features.add(feature)
 
